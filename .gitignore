@@ -1,0 +1,29 @@
+# Secrets - NIEMALS committen!
+.env
+config/config.yaml
+*.key
+*.pem
+
+# Node
+node_modules/
+dashboard/node_modules/
+dashboard/dist/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Data
+data/
+*.db
+*.sqlite
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
