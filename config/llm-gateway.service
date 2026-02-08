@@ -1,0 +1,49 @@
+[Unit]
+Description=LLM Gateway - Kostenoptimiertes AI-Routing für OpenClaw
+Documentation=https://github.com/your-org/llm-gateway
+After=network.target
+
+[Service]
+Type=simple
+User=gateway
+Group=gateway
+WorkingDirectory=/opt/llm-gateway
+Environment="PATH=/opt/llm-gateway/venv/bin"
+EnvironmentFile=/opt/llm-gateway/.env
+
+# Main process
+ExecStart=/opt/llm-gateway/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000 --workers 2
+
+# Restart policy
+Restart=always
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+# Logging
+StandardOutput=append:/var/log/llm-gateway/gateway.log
+StandardError=append:/var/log/llm-gateway/gateway-error.log
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/llm-gateway/data /var/log/llm-gateway
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RemoveIPC=true
+
+# Resource limits
+MemoryMax=2G
+CPUQuota=150%
+
+[Install]
+WantedBy=multi-user.target

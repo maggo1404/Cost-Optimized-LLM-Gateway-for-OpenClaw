@@ -1,0 +1,207 @@
+# ============================================
+# LLM Gateway Konfiguration v2.0
+# ============================================
+# Kopiere diese Datei nach config.yaml und passe sie an.
+# Alle Werte können auch per Environment-Variable überschrieben werden.
+# Format: GATEWAY_<SECTION>_<KEY> (z.B. GATEWAY_PROVIDERS_LOCAL_BASE_URL)
+
+# --------------------------------------------
+# Server-Einstellungen
+# --------------------------------------------
+server:
+  host: "0.0.0.0"
+  port: 8000
+  # Geheimer Schlüssel für API-Authentifizierung
+  # Setze GATEWAY_SECRET in der Umgebung für Produktion!
+  secret: "${GATEWAY_SECRET:-change-me-in-production}"
+  # Entwicklungsmodus (Hot-Reload, Debug-Logs)
+  debug: false
+  # Log-Level: DEBUG, INFO, WARNING, ERROR
+  log_level: "INFO"
+
+# --------------------------------------------
+# Provider-Konfiguration
+# --------------------------------------------
+providers:
+  # ---- Lokales LLM (Ollama, LM Studio, etc.) ----
+  local:
+    enabled: true
+    # OpenAI-kompatibler Endpunkt
+    base_url: "${LOCAL_LLM_URL:-http://host.docker.internal:11434/v1}"
+    # API-Key (bei Ollama: beliebig, bei anderen: ggf. erforderlich)
+    api_key: "${LOCAL_LLM_API_KEY:-local}"
+    # Standard-Modell für LOCAL-Tier
+    default_model: "${LOCAL_LLM_MODEL:-llama3.2:latest}"
+    # Alternative Modelle (für verschiedene Aufgaben)
+    models:
+      cheap: "llama3.2:latest"        # Schnelle, einfache Anfragen
+      router: "llama3.2:latest"       # Routing-Entscheidungen
+      embedding: "nomic-embed-text"   # Embeddings für Semantic Cache
+    # Timeout in Sekunden
+    timeout: 120
+    # Max Tokens
+    max_tokens: 4096
+  
+  # ---- Anthropic (Claude) ----
+  anthropic:
+    enabled: true
+    api_key: "${ANTHROPIC_API_KEY:-}"
+    # Für claude setup-token: Token hier einfügen
+    setup_token: "${ANTHROPIC_SETUP_TOKEN:-}"
+    # Standard-Modell für PREMIUM-Tier
+    default_model: "claude-sonnet-4-20250514"
+    # Prompt-Caching aktivieren (90% Rabatt auf wiederholte Prefixe)
+    use_prompt_caching: true
+    # Max Tokens
+    max_tokens: 8192
+  
+  # ---- Groq (Optional, für Cloud-Fallback) ----
+  groq:
+    enabled: false
+    api_key: "${GROQ_API_KEY:-}"
+    default_model: "llama-3.1-8b-instant"
+    # Als Fallback wenn lokales LLM nicht erreichbar
+    use_as_fallback: true
+  
+  # ---- OpenAI (Optional) ----
+  openai:
+    enabled: false
+    api_key: "${OPENAI_API_KEY:-}"
+    default_model: "gpt-4o-mini"
+
+# --------------------------------------------
+# Routing-Konfiguration
+# --------------------------------------------
+routing:
+  # Routing-Provider: "local" (lokales LLM) oder "groq" (Cloud)
+  router_provider: "local"
+  
+  # Tier-Definitionen
+  tiers:
+    # LOCAL: Lokales LLM für einfache Anfragen
+    local:
+      enabled: true
+      provider: "local"
+      # Kategorien die lokal bearbeitet werden
+      categories:
+        - "simple_explanation"
+        - "shell_command"
+        - "quick_fix"
+        - "documentation"
+      # Max Kontext-Tokens
+      context_budget: 4000
+    
+    # CHEAP: Für mittlere Komplexität (Groq oder lokal)
+    cheap:
+      enabled: true
+      provider: "local"  # oder "groq" für Cloud
+      categories:
+        - "code_review"
+        - "refactoring"
+        - "testing"
+      context_budget: 8000
+    
+    # PREMIUM: Claude für komplexe Aufgaben
+    premium:
+      enabled: true
+      provider: "anthropic"
+      categories:
+        - "architecture"
+        - "complex_debugging"
+        - "security_review"
+        - "optimization"
+      context_budget: 16000
+
+# --------------------------------------------
+# Caching
+# --------------------------------------------
+caching:
+  # Datenverzeichnis für Cache-Datenbanken
+  data_dir: "/app/data"
+  
+  # Exakter Cache (identische Anfragen)
+  exact:
+    enabled: true
+    # TTL in Sekunden (7 Tage)
+    ttl: 604800
+  
+  # Semantischer Cache (ähnliche Anfragen)
+  semantic:
+    enabled: true
+    # Ähnlichkeits-Schwelle (0.0 - 1.0)
+    similarity_threshold: 0.92
+    # TTL in Sekunden (3 Tage)
+    ttl: 259200
+    # Embedding-Provider: "local" oder "openai"
+    embedding_provider: "local"
+
+# --------------------------------------------
+# Budget & Rate-Limits
+# --------------------------------------------
+budget:
+  # Tägliche Budget-Limits in USD
+  daily:
+    soft: 5.0    # Warnung
+    medium: 15.0 # Einschränkungen (nur cheap/local)
+    hard: 50.0   # Totaler Stop
+  
+  # Monatliches Budget (optional)
+  monthly:
+    enabled: false
+    limit: 100.0
+
+rate_limits:
+  # Anfragen pro Minute
+  requests_per_minute: 60
+  # Tokens pro Minute
+  tokens_per_minute: 100000
+  # Burst-Limit (kurzfristige Spitzen)
+  burst_multiplier: 2.0
+
+# --------------------------------------------
+# Sicherheit
+# --------------------------------------------
+security:
+  # Hard Policy Gate (blockiert gefährliche Anfragen)
+  policy_gate:
+    enabled: true
+    # Kategorien zum Blockieren
+    blocked_categories:
+      - "malware"
+      - "credentials"
+      - "system_destruction"
+  
+  # Kill-Switch (manuelles Abschalten)
+  kill_switch:
+    enabled: true
+    # Automatisch aktivieren bei Budget-Überschreitung
+    auto_enable_on_budget: true
+
+# --------------------------------------------
+# Monitoring
+# --------------------------------------------
+monitoring:
+  # Prometheus-Metriken
+  prometheus:
+    enabled: true
+    port: 9090
+  
+  # Strukturiertes Logging
+  logging:
+    format: "json"  # "json" oder "text"
+    # Log-Datei (optional)
+    file: null
+  
+  # Dashboard
+  dashboard:
+    enabled: true
+    port: 3000
+
+# --------------------------------------------
+# OpenClaw Integration
+# --------------------------------------------
+openclaw:
+  # OpenClaw Workspace-Pfad (für Kontext-Retrieval)
+  workspace_path: "${OPENCLAW_WORKSPACE:-/home/marco/.openclaw/workspace}"
+  # Agent-Konfiguration
+  agent_config_path: "${OPENCLAW_AGENT_CONFIG:-/home/marco/.openclaw/agents/main}"

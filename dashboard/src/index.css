@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-github-bg text-github-text font-sans antialiased;
+}
+
+.btn {
+  @apply px-3 py-1.5 text-sm font-medium rounded-md transition-colors;
+  @apply border border-github-border bg-github-card text-github-text hover:bg-github-border;
+}
+
+.btn-primary {
+  @apply bg-github-accent text-github-bg hover:bg-github-accent/90 border-github-accent;
+}
+
+.badge {
+  @apply inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full;
+}
+
+.badge-success { @apply bg-github-success/20 text-github-success; }
+.badge-warning { @apply bg-github-warning/20 text-github-warning; }
+.badge-danger { @apply bg-github-danger/20 text-github-danger; }
+.badge-info { @apply bg-github-accent/20 text-github-accent; }
+
+.card {
+  @apply bg-github-card border border-github-border rounded-lg p-4 lg:p-6;
+}
