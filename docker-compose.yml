@@ -13,7 +13,6 @@
 # Mit Monitoring (Prometheus/Grafana):
 #   docker-compose --profile monitoring up -d
 
-version: "3.8"
 
 services:
   # ==========================================
@@ -122,8 +121,8 @@ services:
       - gateway
     networks:
       - gateway-network
-    profiles:
-      - dashboard
+#    profiles:
+#      - dashboard
 
   # ==========================================
   # Nginx Reverse Proxy (Optional)
@@ -162,8 +161,8 @@ services:
       - '--storage.tsdb.retention.time=30d'
     networks:
       - gateway-network
-    profiles:
-      - monitoring
+#    profiles:
+#      - monitoring
 
   # ==========================================
   # Grafana (Dashboards)
@@ -183,8 +182,8 @@ services:
       - prometheus
     networks:
       - gateway-network
-    profiles:
-      - monitoring
+#    profiles:
+#      - monitoring
 
 volumes:
   gateway-data:
